@@ -10,46 +10,56 @@ CLIENTE_SECRET=os.environ["SHOPIFY_CLIENT_SECRET"]
 
 BASE_URL=f"https://{SHOPIFY_STORE}.myshopify.com"
 TOKEN_URL=f"{BASE_URL}/admin/oauth/access_token"
-
-response = requests.post(
-    TOKEN_URL,
-    headers={"Content-Type": "application/x-www-form-urlencoded"},
-    data={
-        "grant_type": "client_credentials",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENTE_SECRET,
-    },
-    timeout=10,
-)
-
-ACCESS_TOKEN=response.json()["access_token"]
 GRAPHQL_URL=f"{BASE_URL}/admin/api/2026-07/graphql.json"
 
+def get_access_token() -> str:
+    response = requests.post(
+        TOKEN_URL,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "grant_type": "client_credentials",
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENTE_SECRET,
+        },
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()["access_token"]
 
-query = """
-{
-    products(first: 5){
-        edges {
-            node{
-                id
-                title
-                status
+def shopify_graphql_query(query: str, variables: dict | None = None) -> dict:
+    acces_token = get_access_token()
+
+    response = requests.post(
+        GRAPHQL_URL,
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-Shopify-Access-Token": acces_token,
+        },
+        json={"query": query, "variables": variables or {}},
+        timeout=30,
+    )
+    response.raise_for_status()
+
+    data = response.json()
+    if "errors" in data:
+        raise RuntimeError(f"Errores en Shopify: {data["errors"]}")
+    
+    return data["data"]
+
+if __name__ == "__main__":
+    query = """
+    {
+        products(first: 5){
+            edges {
+                node{
+                    id
+                    title
+                    status
+                }
             }
         }
     }
-}
-"""
-
-resp_productos = requests.post(
-    GRAPHQL_URL,
-    headers={
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-Shopify-Access-Token": ACCESS_TOKEN,
-    },
-    json={"query": query},
-    timeout=30,
-)
-
-print("Status code:", resp_productos.status_code)
-print(resp_productos.json())
+    """
+    resultado = shopify_graphql_query(query)
+    print(resultado)
