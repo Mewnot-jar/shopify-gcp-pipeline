@@ -1,14 +1,16 @@
-from extract import paginar_todos, QUERY_PRODUCTOS, QUERY_ORDENES, QUERY_CLIENTES
+from extract import paginar_todos, guardar_como_json, QUERY_PRODUCTOS, QUERY_ORDENES, QUERY_CLIENTES
+
+ENTIDADES = {
+    "products": QUERY_PRODUCTOS,
+    "orders": QUERY_ORDENES,
+    "customers": QUERY_CLIENTES,
+}
 
 def main():
-    productos = paginar_todos(QUERY_PRODUCTOS, "products")
-    print(f"\nTotal productos: {len(productos)} productos.")
-
-    ordenes = paginar_todos(QUERY_ORDENES, "orders")
-    print(f"\nTotal ordenes: {len(ordenes)} ordenes.")
-
-    clientes = paginar_todos(QUERY_CLIENTES, "customers")
-    print(f"\nTotal clientes: {len(clientes)} clientes.")
+    for nombre_entidad, query in ENTIDADES.items():
+        print(f"\nExtrayendo: {nombre_entidad}...")
+        datos = paginar_todos(query, nombre_entidad)
+        guardar_como_json(datos, nombre_entidad)
 
 if __name__ == "__main__":
     main()
