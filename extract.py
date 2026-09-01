@@ -57,3 +57,69 @@ query ($cursor: String) {
     }
 }
 """
+QUERY_ORDENES = """
+query ($cursor: String) {
+    orders(first: 50, after: $cursor) {
+        edges {
+            node {
+                id
+                name
+                createdAt
+                displayFinancialStatus
+                totalPriceSet {
+                    shopMoney {
+                        amount
+                        currencyCode
+                    }
+                }
+                customer {
+                    id
+                }
+                lineItems(first: 10) {
+                    edges {
+                        node {
+                            title
+                            quantity
+                        }
+                    }
+                }
+            }
+        }
+        pageInfo {
+            hasNextPage
+            endCursor
+        }
+    }
+}
+"""
+QUERY_CLIENTES = """
+query ($cursor: String) {
+    customers(first: 50, after: $cursor) {
+        edges {
+            node {
+                id
+                firstName
+                lastName
+                defaultEmailAddress {
+                    emailAddress
+                }
+                createdAt
+                numberOfOrders
+                amountSpent {
+                    amount
+                    currencyCode
+                }
+                defaultAddress {
+                    city
+                    country
+                }
+                tags
+            }
+        }
+        pageInfo {
+            hasNextPage
+            endCursor
+        }
+    }
+}
+"""
