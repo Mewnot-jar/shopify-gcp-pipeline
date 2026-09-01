@@ -3,6 +3,10 @@ import os
 import json
 from datetime import date
 from auth import GRAPHQL_URL, get_access_token
+from google.cloud import storage
+
+GCP_PROJECT_ID = os.environ["GCP_PROJECT_ID"]
+GCS_BUCKET_NAME = os.environ["GCS_BUCKET_NAME"]
 
 QUERY_PRODUCTOS = """
 query ($cursor: String) {
@@ -139,3 +143,17 @@ def guardar_como_json(datos: list[dict], nombre_entidad: str) -> str:
 
     print(f"Guardado: {nombre_archivo} ({len(datos)} registros)")
     return nombre_archivo
+
+def subir_a_gcs(ruta_local: str) -> str:
+    cliente = storage.Client(project=GCP_PROJECT_ID)
+    bucket = cliente.bucket(GCS_BUCKET_NAME)
+
+    nombre_en_bucket = os.path.basename(ruta_local)
+    blob = bucket.blob(nombre_en_bucket)
+
+    blob.upload_from_filename(ruta_local)
+
+    gs = f"gs://{GCS_BUCKET_NAME}/{nombre_en_bucket}"
+
+    print(f"Subido a GCS: {gs}")
+    return gs
