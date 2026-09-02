@@ -1,7 +1,6 @@
 import requests
 import os
 import json
-from datetime import date
 from auth import GRAPHQL_URL, get_access_token
 from google.cloud import storage
 
@@ -131,11 +130,10 @@ def paginar_todos(query: str, nombre_entidad: str) -> list[dict]:
 
     return todos_los_nodos
 
-def guardar_como_json(datos: list[dict], nombre_entidad: str) -> str:
+def guardar_como_json(datos: list[dict], nombre_entidad: str, fecha: str) -> str:
 
     os.makedirs("data/raw", exist_ok=True)
 
-    fecha = date.today().isoformat()
     nombre_archivo = f"data/raw/{nombre_entidad}_{fecha}.json"
 
     with open(nombre_archivo, "w", encoding="utf-8") as archivo:
@@ -144,16 +142,17 @@ def guardar_como_json(datos: list[dict], nombre_entidad: str) -> str:
     print(f"Guardado: {nombre_archivo} ({len(datos)} registros)")
     return nombre_archivo
 
-def subir_a_gcs(ruta_local: str) -> str:
+def subir_a_gcs(ruta_local: str, nombre_entidad: str, fecha: str) -> str:
     cliente = storage.Client(project=GCP_PROJECT_ID)
     bucket = cliente.bucket(GCS_BUCKET_NAME)
 
-    nombre_en_bucket = os.path.basename(ruta_local)
-    blob = bucket.blob(nombre_en_bucket)
+    nombre_archivo = os.path.basename(ruta_local)
+    ruta_en_bucket = f"{nombre_entidad}/{fecha}/{nombre_archivo}"
 
+    blob = bucket.blob(ruta_en_bucket)
     blob.upload_from_filename(ruta_local)
 
-    gs = f"gs://{GCS_BUCKET_NAME}/{nombre_en_bucket}"
+    gs = f"gs://{GCS_BUCKET_NAME}/{ruta_en_bucket}"
 
     print(f"Subido a GCS: {gs}")
     return gs
