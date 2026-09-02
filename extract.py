@@ -142,6 +142,11 @@ def guardar_como_json(datos: list[dict], nombre_entidad: str, fecha: str) -> str
     print(f"Guardado: {nombre_archivo} ({len(datos)} registros)")
     return nombre_archivo
 
+def bucket_existe() -> bool:
+    cliente = storage.Client(project=GCP_PROJECT_ID)
+    bucket = cliente.bucket(GCS_BUCKET_NAME)
+    return bucket.exists()
+
 def subir_a_gcs(ruta_local: str, nombre_entidad: str, fecha: str) -> str:
     cliente = storage.Client(project=GCP_PROJECT_ID)
     bucket = cliente.bucket(GCS_BUCKET_NAME)
