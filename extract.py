@@ -153,16 +153,20 @@ def listar_archivos(prefijo: str = "") -> list[str]:
     return [blob.name for blob in blobs]
 
 def subir_a_gcs(ruta_local: str, nombre_entidad: str, fecha: str) -> str:
-    cliente = storage.Client(project=GCP_PROJECT_ID)
-    bucket = cliente.bucket(GCS_BUCKET_NAME)
-
     nombre_archivo = os.path.basename(ruta_local)
     ruta_en_bucket = f"{nombre_entidad}/{fecha}/{nombre_archivo}"
+    gs = f"gs://{GCS_BUCKET_NAME}/{ruta_en_bucket}"
 
+    archivos_existentes = listar_archivos(prefijo=f"{nombre_entidad}/{fecha}")
+
+    if ruta_en_bucket in archivos_existentes:
+        print(f"Ya existe, se omite subida: {gs}")
+        return gs
+
+    cliente = storage.Client(project=GCP_PROJECT_ID)
+    bucket = cliente.bucket(GCS_BUCKET_NAME)
     blob = bucket.blob(ruta_en_bucket)
     blob.upload_from_filename(ruta_local)
-
-    gs = f"gs://{GCS_BUCKET_NAME}/{ruta_en_bucket}"
 
     print(f"Subido a GCS: {gs}")
     return gs
