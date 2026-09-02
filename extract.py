@@ -147,6 +147,11 @@ def bucket_existe() -> bool:
     bucket = cliente.bucket(GCS_BUCKET_NAME)
     return bucket.exists()
 
+def listar_archivos(prefijo: str = "") -> list[str]:
+    cliente = storage.Client(project=GCP_PROJECT_ID)
+    blobs = cliente.list_blobs(GCS_BUCKET_NAME, prefix=prefijo)
+    return [blob.name for blob in blobs]
+
 def subir_a_gcs(ruta_local: str, nombre_entidad: str, fecha: str) -> str:
     cliente = storage.Client(project=GCP_PROJECT_ID)
     bucket = cliente.bucket(GCS_BUCKET_NAME)
