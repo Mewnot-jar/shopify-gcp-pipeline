@@ -1,8 +1,6 @@
 import requests
 import os
-import json
 from auth import GRAPHQL_URL, get_access_token
-from google.cloud import storage
 
 GCP_PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 GCS_BUCKET_NAME = os.environ["GCS_BUCKET_NAME"]
@@ -129,44 +127,3 @@ def paginar_todos(query: str, nombre_entidad: str) -> list[dict]:
         print(f"Pagina traida. Total acumulado: {len(todos_los_nodos)}")
 
     return todos_los_nodos
-
-def guardar_como_json(datos: list[dict], nombre_entidad: str, fecha: str) -> str:
-
-    os.makedirs("data/raw", exist_ok=True)
-
-    nombre_archivo = f"data/raw/{nombre_entidad}_{fecha}.json"
-
-    with open(nombre_archivo, "w", encoding="utf-8") as archivo:
-        json.dump(datos, archivo, ensure_ascii=False, indent=2)
-
-    print(f"Guardado: {nombre_archivo} ({len(datos)} registros)")
-    return nombre_archivo
-
-def bucket_existe() -> bool:
-    cliente = storage.Client(project=GCP_PROJECT_ID)
-    bucket = cliente.bucket(GCS_BUCKET_NAME)
-    return bucket.exists()
-
-def listar_archivos(prefijo: str = "") -> list[str]:
-    cliente = storage.Client(project=GCP_PROJECT_ID)
-    blobs = cliente.list_blobs(GCS_BUCKET_NAME, prefix=prefijo)
-    return [blob.name for blob in blobs]
-
-def subir_a_gcs(ruta_local: str, nombre_entidad: str, fecha: str) -> str:
-    nombre_archivo = os.path.basename(ruta_local)
-    ruta_en_bucket = f"{nombre_entidad}/{fecha}/{nombre_archivo}"
-    gs = f"gs://{GCS_BUCKET_NAME}/{ruta_en_bucket}"
-
-    archivos_existentes = listar_archivos(prefijo=f"{nombre_entidad}/{fecha}")
-
-    if ruta_en_bucket in archivos_existentes:
-        print(f"Ya existe, se omite subida: {gs}")
-        return gs
-
-    cliente = storage.Client(project=GCP_PROJECT_ID)
-    bucket = cliente.bucket(GCS_BUCKET_NAME)
-    blob = bucket.blob(ruta_en_bucket)
-    blob.upload_from_filename(ruta_local)
-
-    print(f"Subido a GCS: {gs}")
-    return gs
